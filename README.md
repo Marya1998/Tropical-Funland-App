@@ -1,6 +1,7 @@
+HEAD
 # flutter_skeleton
 
-A new Flutter project.
+The flutter skeleton project for our assignment
 
 ## Getting Started
 
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# flutter_skeleton
+ 2f5e7008d171831bdc18b59a70b773e19d9be558
