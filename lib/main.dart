@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_skeleton/Screen/contact_screen.dart';
+import 'package:flutter_skeleton/Screen/rewards_screen.dart';
+import 'screen/profile_screen.dart';
+import 'screen/login_screen.dart';
+import 'screen/admin_dashboard.dart';
+import 'screen/user_dashboard.dart';
+import 'screen/rewards_screen.dart';
+import 'screen/contact_screen.dart';
+
+
+// TODO: Import your admin and user dashboard screens
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -10,27 +22,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Skeleton',
+      debugShowCheckedModeBanner: false,
+      title: 'Tropical Funland',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.teal,
+        useMaterial3: true,
       ),
-      home:  const HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home Page'),
-      ),
-      body: const Center(
-        child: Text('Welcome to the Flutter Skeleton!'),
-      ),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        // Add these after you create them:
+        '/adminDashboard': (context) => const AdminDashboard(),
+        '/userDashboard': (context) => const UserDashboard(),
+        '/rewards': (context) => const RewardsScreen(),
+        '/contact': (context) => const ContactUsScreen(),
+      },
     );
   }
 }
