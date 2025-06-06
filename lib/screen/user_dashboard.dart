@@ -308,7 +308,9 @@ class _UserDashboardState extends State<UserDashboard> {
             crossAxisCount: 2,
             crossAxisSpacing: 16.0,
             mainAxisSpacing: 16.0,
-            childAspectRatio: 2.5, // Adjusted aspect ratio for very short, wide text-only cards
+            // CHANGED THIS LINE TO GIVE MORE VERTICAL SPACE FOR CONTENT
+            childAspectRatio: 1.0, // Was 2.5, which was too short. 1.0 makes it a square.
+            // Adjust as needed (e.g., 1.1, 1.2 if 1.0 is too tall).
           ),
           itemCount: products.length,
           itemBuilder: (context, index) {
@@ -328,10 +330,10 @@ class _UserDashboardState extends State<UserDashboard> {
                   );
                 },
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0), // Increased padding for text content
+                  padding: const EdgeInsets.all(12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         name,
