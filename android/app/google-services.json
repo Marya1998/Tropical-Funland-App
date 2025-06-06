@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "136904855612",
-    "project_id": "mc-flutter-project-a740b",
-    "storage_bucket": "mc-flutter-project-a740b.firebasestorage.app"
+    "project_number": "291228293905",
+    "project_id": "trombol-paradise-app",
+    "storage_bucket": "trombol-paradise-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:136904855612:android:60cb626130a4583e00f339",
+        "mobilesdk_app_id": "1:291228293905:android:944a3cd692ff48eaff4ab0",
         "android_client_info": {
           "package_name": "com.example.flutter_skeleton"
         }
@@ -15,7 +15,26 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDWKo6Ottz-CG_5jrnZYM6eEgVKWkGxLuc"
+          "current_key": "AIzaSyDFoknAonZiZJk6-f1Ef_CZN7COrFRiQc4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291228293905:android:40e58699e5cdbf31ff4ab0",
+        "android_client_info": {
+          "package_name": "com.example.trombol_paradise_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFoknAonZiZJk6-f1Ef_CZN7COrFRiQc4"
         }
       ],
       "services": {
