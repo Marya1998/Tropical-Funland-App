@@ -19,17 +19,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final TextEditingController _descriptionController = TextEditingController();
   bool _productStatusActive = true;
   bool _isProcessingOperation = false;
-
   final TextEditingController _searchProductController = TextEditingController();
   final TextEditingController _searchBookingIdController = TextEditingController();
   final TextEditingController _searchMailController = TextEditingController();
-
   final TextEditingController _settingNameController = TextEditingController();
   final TextEditingController _settingEmailController = TextEditingController();
   final TextEditingController _settingNewPasswordController = TextEditingController();
   final TextEditingController _settingConfirmPasswordController = TextEditingController();
   final TextEditingController _settingGenderController = TextEditingController();
-
   String _currentUserId = '';
   String _currentUserName = 'Admin';
   String _currentUserEmail = '';
@@ -38,6 +35,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     _fetchCurrentAdminProfile();
+    // Add listener for product search input
+    _searchProductController.addListener(() {
+      setState(() {
+        // Trigger a rebuild when search query changes to filter products
+      });
+    });
+    // Add listener for booking search input
+    _searchBookingIdController.addListener(() {
+      setState(() {
+        // Trigger a rebuild when search query changes to filter bookings
+      });
+    });
+    // Add listener for message search input
+    _searchMailController.addListener(() {
+      setState(() {
+        // Trigger a rebuild when search query changes to filter messages
+      });
+    });
   }
 
   Future<void> _fetchCurrentAdminProfile() async {
@@ -51,7 +66,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             .select('name, gender')
             .eq('id', user.id)
             .single();
-
         if (response != null) {
           if (!mounted) return;
           setState(() {
@@ -98,14 +112,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return;
     }
 
+    // Basic validation for price and quantity
+    if (double.tryParse(_priceController.text.trim()) == null ||
+        int.tryParse(_quantityController.text.trim()) == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter valid numbers for Price and Quantity.")),
+      );
+      return;
+    }
+
     if (!mounted) return;
     setState(() {
       _isProcessingOperation = true;
     });
 
     try {
-      String? imageUrl = null;
-
+      String? imageUrl = null; // No image upload logic in this version
       await Supabase.instance.client.from('products').insert({
         'name': _productNameController.text.trim(),
         'category': _categoryController.text.trim(),
@@ -121,6 +144,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         const SnackBar(content: Text("Product added successfully (text-only)! ")),
       );
 
+      // Clear fields after successful addition
       _productNameController.clear();
       _categoryController.clear();
       _priceController.clear();
@@ -187,7 +211,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
             }
           }
         }
-
         await Supabase.instance.client.from('products').delete().eq('id', productId);
 
         if (!mounted) return;
@@ -218,6 +241,145 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  // START: Added _editProduct function
+  Future<void> _editProduct(Map<String, dynamic> product) async {
+    // Create TextEditingControllers and a boolean for the product status
+    // Pre-fill them with the current product data
+    final TextEditingController editProductNameController = TextEditingController(text: product['name'] as String? ?? '');
+    final TextEditingController editCategoryController = TextEditingController(text: product['category'] as String? ?? '');
+    final TextEditingController editPriceController = TextEditingController(text: (product['price'] as num?)?.toString() ?? '0.0');
+    final TextEditingController editQuantityController = TextEditingController(text: (product['quantity'] as int?)?.toString() ?? '0');
+    final TextEditingController editDescriptionController = TextEditingController(text: product['description'] as String? ?? '');
+    bool editProductStatusActive = product['status_active'] as bool? ?? true;
+
+    if (!mounted) return;
+
+    final bool? confirmUpdate = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder( // Use StatefulBuilder to allow internal state changes in the dialog
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Edit Product'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: editProductNameController,
+                      decoration: const InputDecoration(labelText: 'Product Name', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: editCategoryController,
+                      decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: editPriceController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: 'Price (RM)', border: OutlineInputBorder()),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: editQuantityController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: 'Quantity Available', border: OutlineInputBorder()),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: editDescriptionController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(labelText: 'Description', alignLabelWithHint: true, border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: editProductStatusActive,
+                          onChanged: (bool? newValue) {
+                            setDialogState(() { // Use setDialogState to update the dialog's UI
+                              editProductStatusActive = newValue!;
+                            });
+                          },
+                        ),
+                        const Text('Status (Active)'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    // Process the update if confirmed
+    if (confirmUpdate == true) {
+      if (!mounted) return;
+      setState(() {
+        _isProcessingOperation = true; // Show loading indicator
+      });
+
+      try {
+        await Supabase.instance.client.from('products').update({
+          'name': editProductNameController.text.trim(),
+          'category': editCategoryController.text.trim(),
+          'price': double.parse(editPriceController.text.trim()),
+          'quantity': int.parse(editQuantityController.text.trim()),
+          'description': editDescriptionController.text.trim(),
+          'status_active': editProductStatusActive,
+        }).eq('id', product['id']); // Update the specific product by its ID
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Product updated successfully!")),
+        );
+      } on PostgrestException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Database error updating product: ${e.message}")),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("An unexpected error occurred during update: $e")),
+        );
+      } finally {
+        if (!mounted) return;
+        setState(() {
+          _isProcessingOperation = false; // Hide loading indicator
+        });
+        // Dispose controllers after use
+        editProductNameController.dispose();
+        editCategoryController.dispose();
+        editPriceController.dispose();
+        editQuantityController.dispose();
+        editDescriptionController.dispose();
+      }
+    }
+  }
+  // END: Added _editProduct function
+
   Future<void> _saveSettings() async {
     final User? user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
@@ -227,6 +389,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
       );
       return;
     }
+
+    // Validate email if it's being changed (though currently readOnly)
+    // if (_settingEmailController.text.isEmpty || !EmailValidator.validate(_settingEmailController.text.trim())) {
+    //   if (!mounted) return;
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text("Please enter a valid email address.")),
+    //   );
+    //   return;
+    // }
 
     if (!mounted) return;
     setState(() {
@@ -239,6 +410,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         'gender': _settingGenderController.text.trim(),
       }).eq('id', user.id);
 
+      // Handle password update if new password is provided
       if (_settingNewPasswordController.text.isNotEmpty) {
         if (_settingNewPasswordController.text != _settingConfirmPasswordController.text) {
           if (!mounted) return;
@@ -259,6 +431,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         const SnackBar(content: Text("Settings updated successfully!")),
       );
 
+      // Refresh profile data and clear password fields
       _fetchCurrentAdminProfile();
       _settingNewPasswordController.clear();
       _settingConfirmPasswordController.clear();
@@ -284,7 +457,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -539,7 +711,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildManageProductContent() {
     String searchQuery = _searchProductController.text.trim().toLowerCase();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -574,13 +745,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
-
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-
               List<Map<String, dynamic>> products = snapshot.data ?? [];
-
               if (searchQuery.isNotEmpty) {
                 products = products.where((product) {
                   final String name = (product['name'] as String? ?? '').toLowerCase();
@@ -588,32 +756,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   return name.contains(searchQuery) || category.contains(searchQuery);
                 }).toList();
               }
-
               if (products.isEmpty) {
                 return const Center(child: Text('No products found. Add some new products!'));
               }
-
               List<DataRow> productRows = products.map((product) {
                 String id = product['id'].toString();
                 String? imageUrl = product['image_url'] as String?; // Still retrieve it, but won't display
                 String name = product['name'] ?? 'N/A';
                 String description = product['description'] ?? 'No description';
                 double price = (product['price'] as num?)?.toDouble() ?? 0.0;
+                int quantity = (product['quantity'] as int?) ?? 0;
+                bool statusActive = product['status_active'] as bool? ?? false;
 
                 return DataRow(cells: [
                   // Removed the DataCell for Image
                   DataCell(Text(name)),
                   DataCell(Text(description.length > 20 ? '${description.substring(0, 20)}...' : description)),
                   DataCell(Text('RM ${price.toStringAsFixed(2)}')),
+                  DataCell(Text('$quantity')),
+                  DataCell(Icon(
+                    statusActive ? Icons.check_circle : Icons.cancel,
+                    color: statusActive ? Colors.green : Colors.red,
+                    size: 20,
+                  )),
                   DataCell(Row(
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit, size: 20),
                         onPressed: () {
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Edit $name tapped! (ID: $id)")),
-                          );
+                          _editProduct(product); // Call the new edit function, passing the entire product map
                         },
                       ),
                       IconButton(
@@ -628,7 +800,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   )),
                 ]);
               }).toList();
-
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
@@ -640,6 +811,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     DataColumn(label: Text('Name')),
                     DataColumn(label: Text('Summary')),
                     DataColumn(label: Text('Price')),
+                    DataColumn(label: Text('Quantity')),
+                    DataColumn(label: Text('Status')),
                     DataColumn(label: Text('Action')),
                   ],
                   rows: productRows,
@@ -654,7 +827,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildViewBookingContent() {
     String searchQuery = _searchBookingIdController.text.trim().toLowerCase();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -693,13 +865,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
-
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-
               List<Map<String, dynamic>> bookings = snapshot.data ?? [];
-
               if (searchQuery.isNotEmpty) {
                 bookings = bookings.where((booking) {
                   final String bookingId = (booking['id'] as String? ?? '').toLowerCase();
@@ -707,11 +876,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   return bookingId.contains(searchQuery) || customerEmail.contains(searchQuery);
                 }).toList();
               }
-
               if (bookings.isEmpty) {
                 return const Center(child: Text('No bookings found.'));
               }
-
               List<DataRow> bookingRows = bookings.map((booking) {
                 String id = booking['id'].toString();
                 String date = booking['booking_date'] != null
@@ -719,7 +886,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     : 'N/A';
                 String customerEmail = booking['customer_email'] ?? 'N/A';
                 String status = booking['status'] ?? 'N/A';
-
                 return DataRow(cells: [
                   DataCell(Text(date)),
                   DataCell(Text(customerEmail)),
@@ -762,7 +928,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   )),
                 ]);
               }).toList();
-
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
@@ -819,30 +984,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
-
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-
               List<Map<String, dynamic>> messages = snapshot.data ?? [];
-
               if (searchQuery.isNotEmpty) {
                 messages = messages.where((message) {
                   final String senderEmail = (message['sender_email'] as String? ?? '').toLowerCase();
                   return senderEmail.contains(searchQuery);
                 }).toList();
               }
-
               if (messages.isEmpty) {
                 return const Center(child: Text('No messages found.'));
               }
-
               List<DataRow> messageRows = messages.map((message) {
                 String senderName = message['sender_name'] ?? 'N/A';
                 String senderEmail = message['sender_email'] ?? 'N/A';
                 String subject = message['subject'] ?? 'N/A';
                 String content = message['message_content'] ?? 'No content';
-
                 return DataRow(cells: [
                   DataCell(Text(senderName)),
                   DataCell(Text(senderEmail)),
@@ -881,7 +1040,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   ),
                 ]);
               }).toList();
-
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
@@ -934,7 +1092,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _settingEmailController,
-            readOnly: true,
+            readOnly: true, // Email is read-only for now
             decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
           ),
           const SizedBox(height: 16),
